@@ -195,6 +195,8 @@
   /* image placeholder */
   figure{margin:22px 0;}
   .shot{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);background:var(--panel);}
+  figure.demo{position:relative;}
+  figure.demo .live-tag{position:absolute;top:14px;left:14px;z-index:2;display:flex;align-items:center;gap:7px;background:rgba(18,22,31,.82);color:#fff;font-family:"Inter",system-ui,sans-serif;font-size:.74rem;font-weight:600;letter-spacing:.02em;padding:6px 12px;border-radius:999px;backdrop-filter:blur(4px);pointer-events:none;}
   .ph{
     border:2px dashed #c9c2b2;border-radius:12px;background:
       repeating-linear-gradient(45deg,#fbfaf6,#fbfaf6 14px,#f3f0e8 14px,#f3f0e8 28px);
@@ -370,9 +372,14 @@
     <h2>The prototype</h2>
     <p>A reviewer pastes a script, the AI checks it against the active safety guidelines for that age band, and returns a 0–100 safety score, flagged categories, and an Approved or Pending status. Clear content advances; flagged content lands in the reviewer's queue with a plain-language explanation. Every final call stays human — the AI presents the evidence, the person decides.</p>
 
-    <figure>
-      <img class="shot" src="safety-report.png" alt="KidSafe AI Safety Report: Grade A, score 92/100, with a Final Human Sign-Off pipeline routing the content to a human reviewer before production.">
-      <figcaption>Figure 1 — The AI Safety Report. A grade and score sit above an explicit human sign-off pipeline: AI review complete → route to reviewer → reviewer approves → clear for production. The score never auto-ships content.</figcaption>
+    <figure class="demo">
+      <span class="live-tag">▶ Watch the 15s demo</span>
+      <video class="shot" loop playsinline preload="metadata" poster="demo-poster.jpg" controls aria-label="Screen recording of the KidSafe prototype: walking through the AI Safety Report and the human sign-off pipeline for a submitted script.">
+        <source src="demo.mp4" type="video/mp4">
+        <source src="demo.webm" type="video/webm">
+        Your browser doesn't support embedded video. <a href="demo.mp4">Download the demo clip</a>.
+      </video>
+      <figcaption>Figure 1 — The prototype in motion. A submission's AI Safety Report opens onto an explicit human sign-off pipeline: AI review complete → route to reviewer → reviewer approves → clear for production. The score never auto-ships content. (Silent ~15s clip — press play.)</figcaption>
     </figure>
 
     <div class="cols2">
