@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KidSafe — AI Content Safety Review · Case Study by Angela Xu</title>
+<style>
+  /* ============================================================
+     KidSafe case study — single-file page
+     Design motif: the page reads like a "review result" —
+     score card hook, flag-style section markers, pass/escalate
+     vocabulary borrowed from the product itself.
+     ============================================================ */
+
+  :root{
+    --ink:#12161f;          /* deep near-black, primary text */
+    --ink-soft:#3d4554;     /* secondary text */
+    --paper:#f7f5f0;        /* warm off-white background */
+    --panel:#ffffff;        /* card surface */
+    --line:#e2ddd2;         /* hairline rules */
+    --signal:#1f7a5a;       /* "approved" green — the one accent */
+    --signal-deep:#13543d;
+    --flag:#c2603a;         /* "escalate" warm flag tone, used sparingly */
+    --shadow:0 1px 2px rgba(18,22,31,.06),0 8px 28px rgba(18,22,31,.06);
+    --maxw:1080px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Georgia","Iowan Old Style",serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* Utility / data face for labels, scores, eyebrows */
+  .mono{
+    font-family:"SF Mono","JetBrains Mono","Menlo","Consolas",monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  .sans{
+    font-family:"Inter","Helvetica Neue","Segoe UI",system-ui,sans-serif;
+  }
+
+  a{color:var(--signal-deep);text-underline-offset:3px;}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    border-bottom:1px solid var(--line);
+    background:rgba(247,245,240,.85);
+    backdrop-filter:saturate(120%) blur(6px);
+    position:sticky;top:0;z-index:20;
+  }
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;}
+  .brand{font-family:"Inter",system-ui,sans-serif;font-weight:700;letter-spacing:-.01em;font-size:1.05rem;}
+  .brand .dot{color:var(--signal);}
+  .navlinks{display:flex;gap:22px;font-family:"Inter",system-ui,sans-serif;font-size:.82rem;}
+  .navlinks a{color:var(--ink-soft);text-decoration:none;}
+  .navlinks a:hover{color:var(--ink);}
+  @media(max-width:680px){.navlinks{display:none;}}
+
+  /* ---------- hero / score card ---------- */
+  .hero{padding:64px 0 40px;}
+  .eyebrow{
+    font-family:"Inter",system-ui,sans-serif;
+    font-size:.72rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--signal-deep);margin-bottom:18px;
+  }
+  h1{
+    font-size:clamp(2.1rem,5vw,3.4rem);
+    line-height:1.08;letter-spacing:-.02em;margin:0 0 18px;font-weight:700;
+  }
+  .lede{font-size:1.2rem;color:var(--ink-soft);max-width:62ch;margin:0 0 36px;}
+
+  /* the scorecard — the signature element */
+  .scorecard{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .scorecard-head{
+    display:flex;align-items:center;gap:20px;
+    padding:22px 26px;border-bottom:1px solid var(--line);
+  }
+  .score-ring{
+    --val:92;
+    flex:0 0 auto;width:84px;height:84px;border-radius:50%;
+    display:grid;place-items:center;position:relative;
+    background:
+      radial-gradient(closest-side,var(--panel) 78%,transparent 79% 100%),
+      conic-gradient(var(--signal) calc(var(--val)*1%),var(--line) 0);
+  }
+  .score-ring b{font-family:"Inter",system-ui,sans-serif;font-size:1.5rem;font-weight:700;}
+  .score-meta .status{
+    font-family:"Inter",system-ui,sans-serif;font-weight:700;font-size:1.1rem;color:var(--signal-deep);
+    display:flex;align-items:center;gap:8px;
+  }
+  .score-meta .status::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--signal);}
+  .score-meta .sub{font-family:"Inter",system-ui,sans-serif;font-size:.85rem;color:var(--ink-soft);}
+
+  .scorecard-body{padding:8px 26px 26px;}
+  .tldr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;}
+  @media(max-width:760px){.tldr-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:440px){.tldr-grid{grid-template-columns:1fr;}}
+  .tldr-cell{padding:18px 20px 16px;border-right:1px solid var(--line);}
+  .tldr-cell:last-child{border-right:none;}
+  @media(max-width:760px){
+    .tldr-cell{border-right:1px solid var(--line);border-bottom:1px solid var(--line);}
+    .tldr-cell:nth-child(2n){border-right:none;}
+    .tldr-cell:nth-last-child(-n+2){border-bottom:none;}
+  }
+  @media(max-width:440px){
+    .tldr-cell{border-right:none;border-bottom:1px solid var(--line);}
+    .tldr-cell:last-child{border-bottom:none;}
+  }
+  .tldr-cell .k{font-family:"Inter",system-ui,sans-serif;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--signal-deep);font-weight:600;margin-bottom:6px;}
+  .tldr-cell .v{font-size:.96rem;color:var(--ink);line-height:1.45;}
+
+  /* fact strip under hook */
+  .facts{
+    display:flex;flex-wrap:wrap;gap:0 0;margin-top:22px;
+    border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;
+  }
+  .fact{padding:14px 20px;border-right:1px solid var(--line);flex:1 1 auto;min-width:150px;}
+  .fact:last-child{border-right:none;}
+  .fact .k{font-family:"Inter",system-ui,sans-serif;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-bottom:4px;}
+  .fact .v{font-family:"Inter",system-ui,sans-serif;font-size:.9rem;font-weight:600;}
+
+  /* ---------- section scaffolding ---------- */
+  section.block{padding:54px 0;border-top:1px solid var(--line);}
+  .sec-mark{
+    font-family:"SF Mono",monospace;font-size:.74rem;letter-spacing:.04em;
+    color:var(--signal-deep);font-weight:600;margin-bottom:10px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .sec-mark::after{content:"";flex:1;height:1px;background:var(--line);}
+  h2{font-size:clamp(1.5rem,3vw,2.05rem);line-height:1.15;letter-spacing:-.015em;margin:0 0 18px;font-weight:700;}
+  h3{font-family:"Inter",system-ui,sans-serif;font-size:1.08rem;font-weight:700;margin:28px 0 8px;letter-spacing:-.01em;}
+  p{margin:0 0 16px;max-width:70ch;}
+  .block p, .block li{color:var(--ink);}
+  .muted{color:var(--ink-soft);}
+
+  ul.clean{list-style:none;padding:0;margin:0 0 16px;max-width:72ch;}
+  ul.clean li{padding-left:26px;position:relative;margin-bottom:10px;}
+  ul.clean li::before{content:"";position:absolute;left:4px;top:.62em;width:7px;height:7px;border-radius:2px;background:var(--signal);}
+
+  /* two-column where useful */
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+  @media(max-width:760px){.cols2{grid-template-columns:1fr;gap:8px;}}
+
+  /* decision / orchestration cards */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:10px;}
+  @media(max-width:860px){.cards{grid-template-columns:1fr;}}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;box-shadow:var(--shadow);
+  }
+  .card .num{font-family:"SF Mono",monospace;font-size:.8rem;color:var(--flag);font-weight:600;}
+  .card h3{margin:8px 0 8px;font-size:1.02rem;}
+  .card p{font-size:.93rem;color:var(--ink-soft);margin-bottom:0;}
+
+  /* iteration timeline */
+  .timeline{border-left:2px solid var(--line);margin:10px 0 0;padding:4px 0 4px 0;}
+  .tl-item{position:relative;padding:0 0 26px 28px;}
+  .tl-item::before{
+    content:"";position:absolute;left:-7px;top:4px;width:12px;height:12px;border-radius:50%;
+    background:var(--paper);border:2px solid var(--signal);
+  }
+  .tl-item.fail::before{border-color:var(--flag);}
+  .tl-item .lab{font-family:"SF Mono",monospace;font-size:.72rem;letter-spacing:.04em;color:var(--ink-soft);font-weight:600;text-transform:uppercase;}
+  .tl-item h3{margin:4px 0 6px;font-size:1.02rem;}
+  .tl-item p{font-size:.93rem;color:var(--ink-soft);margin-bottom:0;}
+
+  /* metrics */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:8px;}
+  @media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:420px){.kpis{grid-template-columns:1fr;}}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;text-align:left;}
+  .kpi .big{font-family:"Inter",system-ui,sans-serif;font-size:1.7rem;font-weight:700;color:var(--signal-deep);letter-spacing:-.02em;}
+  .kpi .lab{font-family:"Inter",system-ui,sans-serif;font-size:.8rem;color:var(--ink-soft);margin-top:4px;line-height:1.35;}
+
+  /* image placeholder */
+  figure{margin:22px 0;}
+  .shot{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);background:var(--panel);}
+  .ph{
+    border:2px dashed #c9c2b2;border-radius:12px;background:
+      repeating-linear-gradient(45deg,#fbfaf6,#fbfaf6 14px,#f3f0e8 14px,#f3f0e8 28px);
+    min-height:300px;display:grid;place-items:center;text-align:center;padding:30px;
+  }
+  .ph .lab{font-family:"Inter",system-ui,sans-serif;color:#8a8472;font-size:.9rem;max-width:46ch;}
+  .ph .lab b{display:block;color:var(--ink-soft);font-size:1rem;margin-bottom:6px;}
+  figcaption{font-family:"Inter",system-ui,sans-serif;font-size:.82rem;color:var(--ink-soft);margin-top:10px;}
+
+  /* quote */
+  .pull{
+    border-left:3px solid var(--signal);padding:6px 0 6px 22px;margin:22px 0;
+    font-size:1.12rem;line-height:1.5;color:var(--ink);
+  }
+  .pull cite{display:block;font-family:"Inter",system-ui,sans-serif;font-size:.82rem;color:var(--ink-soft);font-style:normal;margin-top:10px;}
+
+  /* method cards */
+  .methods{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px;}
+  @media(max-width:860px){.methods{grid-template-columns:1fr;}}
+  .method{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;}
+  .method .tag{font-family:"SF Mono",monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--signal-deep);font-weight:600;}
+  .method h3{margin:8px 0 8px;font-size:1.02rem;}
+  .method p{font-size:.92rem;color:var(--ink-soft);margin:0;}
+
+  /* risk table */
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-family:"Inter",system-ui,sans-serif;font-size:.9rem;}
+  th,td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  td .r{font-weight:600;color:var(--ink);}
+
+  /* footer */
+  footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--ink-soft);font-family:"Inter",system-ui,sans-serif;font-size:.86rem;}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:center;}
+
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease;}
+  .reveal.in{opacity:1;transform:none;}
+  @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none;}}
+
+  :focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand">KidSafe<span class="dot">.</span></div>
+    <nav class="navlinks" aria-label="Section navigation">
+      <a href="#context">Context</a>
+      <a href="#problem">Problem</a>
+      <a href="#prototype">Prototype</a>
+      <a href="#orchestration">AI Orchestration</a>
+      <a href="#research">Research</a>
+      <a href="#impact">Impact</a>
+      <a href="#reflection">Reflection</a>
+    </nav>
+  </div>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Portfolio case study · AI product orchestration</div>
+    <h1>A first-pass safety reviewer<br>for children's media.</h1>
+    <p class="lede">KidSafe scores scripts and media against configurable child-safety guidelines and returns a structured flag report — so human reviewers spend their judgment only where it's needed, and never hand the final call to a machine.</p>
+
+    <div class="scorecard" aria-label="Executive summary, styled as a KidSafe review result">
+      <div class="scorecard-head">
+        <div class="score-ring" style="--val:92"><b>92</b></div>
+        <div class="score-meta">
+          <div class="status">Executive summary</div>
+          <div class="sub">Context · Problem · Solution · Impact — the 30-second read</div>
+        </div>
+      </div>
+      <div class="scorecard-body">
+        <div class="tldr-grid">
+          <div class="tldr-cell">
+            <div class="k">Context</div>
+            <div class="v">Studios now generate scripts and video with AI tools that ship with no child-safety filter — just as the FTC's updated COPPA rule began requiring algorithmic safety audits.</div>
+          </div>
+          <div class="tldr-cell">
+            <div class="k">Problem</div>
+            <div class="v">Manual safety review doesn't scale with AI-accelerated output. A violation caught late triggers costly rework that erases the speed AI promised.</div>
+          </div>
+          <div class="tldr-cell">
+            <div class="k">Solution</div>
+            <div class="v">A prototype that runs a first-pass rule check, returns a score plus explained flags, and routes anything subjective to a human — keeping people in control.</div>
+          </div>
+          <div class="tldr-cell">
+            <div class="k">Impact</div>
+            <div class="v">Fieldwork surfaced a sharper use case — catching unconscious bias in any content — reframing KidSafe from an AI-output checker to a review layer for anyone who touches kids' media.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="facts sans">
+      <div class="fact"><div class="k">Goal</div><div class="v">Cut first-pass review time, keep humans deciding</div></div>
+      <div class="fact"><div class="k">Role</div><div class="v">Solo — researcher &amp; AI orchestrator</div></div>
+      <div class="fact"><div class="k">Timeframe</div><div class="v">Graduate course, ~6 weeks (2026)</div></div>
+      <div class="fact"><div class="k">Tools</div><div class="v">Replit · Claude/LLM prompting · Zoom · Otter.ai</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== CONTEXT ===================== -->
+<section class="block reveal" id="context">
+  <div class="wrap">
+    <div class="sec-mark mono">01 — Context</div>
+    <h2>Where this came from</h2>
+    <div class="cols2">
+      <div>
+        <p>This project was built for a graduate AI-orchestration course (INTC 6033), where the brief was to take a real product problem from framing through prototype and user research, acting as the person who directs AI rather than the person who hand-builds every part.</p>
+        <p>I came to children's media from the audience and production side — time spent around kids' animation, and a clear view of how much questionable content already slips through. That gave me a concrete reason to care about the failure mode at the center of this work: not over-flagging, but <em>missing</em> something that should never reach a child.</p>
+      </div>
+      <div>
+        <p class="muted">Two forces made the timing real:</p>
+        <ul class="clean">
+          <li><b>Regulatory.</b> The FTC's updated COPPA Final Rule (effective April 22, 2026) requires algorithmic safety audits on child-directed media.</li>
+          <li><b>Technological.</b> Tools like Sora and Veo 3 let studios generate scripts and video at volume — with no built-in safety filter, pushing the review burden downstream onto people.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PROBLEM ===================== -->
+<section class="block reveal" id="problem">
+  <div class="wrap">
+    <div class="sec-mark mono">02 — Problem</div>
+    <h2>Manual safety review doesn't scale with AI</h2>
+    <p>When generative AI speeds up content creation, it doesn't remove the safety-review burden — it shifts it downstream and amplifies it. A human reviewer can't cross-reference every draft against every applicable guideline without fatigue and error, and a single violation caught late triggers expensive rework that erases the time and cost gains AI was supposed to deliver.</p>
+    <p class="muted">Framed as a design challenge:</p>
+    <p style="font-size:1.18rem;color:var(--ink);max-width:64ch;"><b>How might we support teams in reviewing content — scripts, video, dialogue — for child safety, age-appropriateness, and emotional tone, reducing manual review time while keeping humans in control of every final decision?</b></p>
+  </div>
+</section>
+
+<!-- ===================== APPROACH ===================== -->
+<section class="block reveal" id="approach">
+  <div class="wrap">
+    <div class="sec-mark mono">03 — Approach</div>
+    <h2>How the project moved</h2>
+    <p>The course ran in milestones; a few did the heaviest lifting for the final result. I've described them in plain terms rather than course shorthand.</p>
+    <div class="cards">
+      <div class="card">
+        <div class="num">M1–M2</div>
+        <h3>Problem framing &amp; research plan</h3>
+        <p>Defined the user, the design challenge, and the business and research questions — then wrote a recruitment plan and interview protocol around real production professionals.</p>
+      </div>
+      <div class="card">
+        <div class="num">M3</div>
+        <h3>Working prototype</h3>
+        <p>Built a live, clickable tool that takes a script, scores it, and returns explained flags — the thing participants could actually use, not a mockup.</p>
+      </div>
+      <div class="card">
+        <div class="num">M4</div>
+        <h3>Fieldwork &amp; pivot</h3>
+        <p>Moderated walkthroughs plus interviews. The findings reframed the product and produced a concrete, prioritized change list.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PROTOTYPE ===================== -->
+<section class="block reveal" id="prototype">
+  <div class="wrap">
+    <div class="sec-mark mono">04 — Solution</div>
+    <h2>The prototype</h2>
+    <p>A reviewer pastes a script, the AI checks it against the active safety guidelines for that age band, and returns a 0–100 safety score, flagged categories, and an Approved or Pending status. Clear content advances; flagged content lands in the reviewer's queue with a plain-language explanation. Every final call stays human — the AI presents the evidence, the person decides.</p>
+
+    <figure>
+      <img class="shot" src="safety-report.png" alt="KidSafe AI Safety Report: Grade A, score 92/100, with a Final Human Sign-Off pipeline routing the content to a human reviewer before production.">
+      <figcaption>Figure 1 — The AI Safety Report. A grade and score sit above an explicit human sign-off pipeline: AI review complete → route to reviewer → reviewer approves → clear for production. The score never auto-ships content.</figcaption>
+    </figure>
+
+    <div class="cols2">
+      <figure>
+        <img class="shot" src="script-detail.png" alt="Script detail view showing the submitted Episode 2 script alongside a Safety Verdict panel with score and review summary.">
+        <figcaption>Figure 2 — Submission detail. The script sits beside its Safety Verdict and plain-language review summary.</figcaption>
+      </figure>
+      <figure>
+        <img class="shot" src="flagged-lines.png" alt="Flagged-lines view: the exact flagged sentence is highlighted in the script, with a Bias/Stereotyping flag marked Low severity and Unresolved.">
+        <figcaption>Figure 3 — Exact-line highlighting and the flag breakdown, with severity and a resolved/unresolved marker — both shipped in response to fieldwork.</figcaption>
+      </figure>
+    </div>
+
+    <figure>
+      <img class="shot" src="dashboard.png" alt="KidSafe dashboard showing total submissions, pending reviews, approval rate, flags this week, a flags-by-category chart, and a recent activity feed.">
+      <figcaption>Figure 4 — The dashboard: pipeline status, flags by category, and a live activity feed across active projects.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ===================== AI ORCHESTRATION ===================== -->
+<section class="block reveal" id="orchestration">
+  <div class="wrap">
+    <div class="sec-mark mono">05 — AI Integration</div>
+    <h2>Orchestrating the AI, not just using it</h2>
+    <p style="max-width:64ch;"><b>My approach as an orchestrator:</b> I treated the AI as a fast, fallible first-pass reviewer and designed the system around its failure modes — constraining what it was allowed to claim, deciding which judgments it could never own, and shaping the interface so a human stays in analytical control rather than rubber-stamping a score.</p>
+
+    <h3 style="margin-top:30px;">Three decisions that defined the build</h3>
+    <div class="cards">
+      <div class="card">
+        <div class="num">Decision 01</div>
+        <h3>Platform: a live prototype, not a deck</h3>
+        <p>I chose Replit to ship a working, clickable tool because the research goal was <em>validation</em> — watching real professionals navigate and triage — which a static mockup can't surface. The brief rewarded a standalone artifact that stands on its own.</p>
+      </div>
+      <div class="card">
+        <div class="num">Decision 02</div>
+        <h3>Drawing the human-in-the-loop line</h3>
+        <p>Using an automation-vs-augmentation framework, I partitioned the work: rule-matching and scoring are fully automated; every triage decision and all guideline configuration stay human-owned. The AI enforces what humans set — it doesn't define what "safe" means.</p>
+      </div>
+      <div class="card">
+        <div class="num">Decision 03</div>
+        <h3>Constraining the prompt against hallucination</h3>
+        <p>When the scoring prompt began citing script lines that didn't exist, I added a hard rule: reference only text present verbatim in the submission. Fabricated evidence destroys reviewer trust — so the architecture forbids it.</p>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-top:26px;">These choices were guided by principles I prioritized throughout: <b>keep humans in control of consequential decisions</b>, <b>make the AI's reasoning legible</b>, and <b>treat a missed violation as the failure that matters most</b>. The theory backing this — Cognitive Load Theory and the Heuristic-Systematic Model — framed the tool as a way to absorb mechanical load so reviewers stay in deliberate, analytical mode instead of defaulting to shortcuts under deadline pressure.</p>
+  </div>
+</section>
+
+<!-- ===================== ITERATION ===================== -->
+<section class="block reveal" id="iteration">
+  <div class="wrap">
+    <div class="sec-mark mono">06 — Iteration</div>
+    <h2>How the thinking evolved</h2>
+    <p>Two evolutions matter. First, the scoring engine itself, taught through four prompt architectures. Second — and more important — a strategic pivot that the technical failures directly seeded.</p>
+
+    <h3>The prompt, in four passes</h3>
+    <div class="timeline">
+      <div class="tl-item fail">
+        <div class="lab">Iteration 1 · discarded</div>
+        <h3>Flat score</h3>
+        <p>A single 0–100 number with no explanation. Reviewers had no basis to act — no categories, no reasoning.</p>
+      </div>
+      <div class="tl-item fail">
+        <div class="lab">Iteration 2 · discarded</div>
+        <h3>Pass/fail checklist</h3>
+        <p>Structured but binary. No severity signal — a borderline flag and a clear violation looked identical, creating noise.</p>
+      </div>
+      <div class="tl-item fail">
+        <div class="lab">Iteration 3 · discarded</div>
+        <h3>Severity-weighted scoring</h3>
+        <p>Better — until the AI began hallucinating citations to script lines that didn't exist. Fabricated evidence destroyed trust.</p>
+      </div>
+      <div class="tl-item">
+        <div class="lab">Iteration 4 · shipped to fieldwork</div>
+        <h3>Constrained citation + resolved-flag logic</h3>
+        <p>Reference only verbatim text, and distinguish bias the script <em>corrects</em> from bias left unresolved. This produced the output participants could act on without confusion.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:30px;">The pivot the failures created</h3>
+    <p>Teaching the prompt to tell harmful bias apart from bias that's modeled and then corrected turned out to be the whole product insight. When the prototype began flagging <em>resolved</em> bias, participants recognized it immediately as something writers need to see about their own work.</p>
+    <div class="pull">
+      "This is a great tool so none of our biases get into the script. When we read a script, we can think something is okay — but in actuality it's not."
+      <cite>— P2, Production Manager, Nickelodeon Jr.</cite>
+    </div>
+    <p>Three of four participants, unprompted, named bias detection across content types as the highest-value use. That moved KidSafe from "a checker for AI-generated output" to "a content bias and safety review layer for anyone who touches children's media" — a much larger audience than production teams using AI tools.</p>
+  </div>
+</section>
+
+<!-- ===================== RESEARCH ===================== -->
+<section class="block reveal" id="research">
+  <div class="wrap">
+    <div class="sec-mark mono">07 — Research &amp; validation</div>
+    <h2>How I validated the work</h2>
+    <p>Three distinct methods, each answering a different question — does the workflow fit, where does it break, and what does the interface need to show.</p>
+
+    <div class="methods">
+      <div class="method">
+        <div class="tag">Method 01</div>
+        <h3>Usability sessions &amp; interviews</h3>
+        <p>Moderated prototype walkthroughs followed by semi-structured interviews with four children's-media professionals (Netflix Animation, Nickelodeon Jr., Netflix post-production, The Dodo). Participants submitted a real test script and reasoned aloud through the result.</p>
+      </div>
+      <div class="method">
+        <div class="tag">Method 02</div>
+        <h3>Task analysis &amp; workflow flowchart</h3>
+        <p>Mapped the end-to-end review flow across two tracks — the core user path (dashboard → submit → results) and the review pipeline — to pinpoint where automation helps and where it must hand off to a person. The mapping made the mandatory human sign-off gate explicit.</p>
+      </div>
+      <div class="method">
+        <div class="tag">Method 03</div>
+        <h3>Automation-vs-augmentation audit</h3>
+        <p>A structured partition of every subtask into AI-only, hybrid, or human-centric — the framework that set the human-in-the-loop boundaries baked into the prototype's decision logic.</p>
+      </div>
+    </div>
+
+    <figure>
+      <img class="shot" src="workflow.png" alt="KidSafe workflow diagram. Top track: the core user flow — Dashboard, Projects, Pipeline, Submit, Results. The AI scores against age-banded guidelines and routes to review. Bottom track: the human-in-the-loop review pipeline — AI review complete, then a mandatory human sign-off gate where no content auto-approves, then reviewer approval, then clear for production, with a revise loop returning flagged content to the writer.">
+      <figcaption>Figure 5 — KidSafe review workflow. The core user flow feeds a review pipeline whose centerpiece is a mandatory human sign-off gate: the AI triages, but never decides.</figcaption>
+    </figure>
+
+    <div class="cols2">
+      <figure>
+        <img class="shot" src="guidelines.png" alt="Safety Guidelines library showing eight toggleable rules such as No Graphic Violence, No Stereotyping or Bias, and Mature Theme Restriction, each tagged by category and age band.">
+        <figcaption>Figure 6 — The configurable guidelines a studio owns. The AI enforces what humans switch on; it doesn't define "safe."</figcaption>
+      </figure>
+      <figure>
+        <img class="shot" src="projects.png" alt="Projects view listing the Tween Explorers Club production with age band, submission counts, and a View Pipeline action.">
+        <figcaption>Figure 7 — Projects organize submissions by production and age band — the workflow reviewers already recognize.</figcaption>
+      </figure>
+    </div>
+
+    <h3>What fieldwork found</h3>
+    <ul class="clean">
+      <li><b>Navigation was intuitive.</b> All four participants submitted a script and read the score back without instruction.</li>
+      <li><b>Human-in-loop is non-negotiable.</b> Every participant required a person in the final decision, regardless of score — KidSafe as first-pass, not replacement.</li>
+      <li><b>Missing a flag is the trust-breaker.</b> Over-flagging is annoying but survivable; under-flagging is disqualifying. This set the false-negative target below.</li>
+      <li><b>Concrete gaps to close.</b> Add file upload, exact-line highlighting, a sexual-content category, and a clear "resolved vs. unresolved" distinction on bias flags.</li>
+    </ul>
+    <div class="pull">
+      "I would only feel comfortable if this was used knowing a person has actually read the script and is involved the entire time."
+      <cite>— P3, Post-Production Specialist, Netflix</cite>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== IMPACT / KPIs ===================== -->
+<section class="block reveal" id="impact">
+  <div class="wrap">
+    <div class="sec-mark mono">08 — Evaluation &amp; aspirational impact</div>
+    <h2>Risks identified, and KPIs to scale</h2>
+    <p>The evaluation plan separates what I could test in a small study from the metrics that would govern a real production rollout. The targets below are the ones I'd hold the product to as it scales.</p>
+
+    <div class="kpis">
+      <div class="kpi"><div class="big">&lt;1%</div><div class="lab">False-negative rate — missing a real problem is the primary trust-breaking failure</div></div>
+      <div class="kpi"><div class="big">&lt;10%</div><div class="lab">False-positive rate — excess flags create fatigue and erode adoption</div></div>
+      <div class="kpi"><div class="big">&lt;5 min</div><div class="lab">First-pass review time per submission</div></div>
+      <div class="kpi"><div class="big">67%+</div><div class="lab">Adoption intent — would advocate for KidSafe to their supervisor</div></div>
+    </div>
+
+    <h3 style="margin-top:30px;">Risks I designed for</h3>
+    <table>
+      <thead><tr><th>Risk</th><th>What could go wrong</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td class="r">Automation bias</td><td>Reviewers approve scores without scrutiny under deadline pressure.</td><td>Fieldwork tests for it directly; blind audits with known-bad scripts at scale.</td></tr>
+        <tr><td class="r">Guideline gaps at launch</td><td>Content violating an unconfigured rule passes as "safe."</td><td>Mandatory guideline-coverage audit as a launch gate.</td></tr>
+        <tr><td class="r">Cultural blindspot</td><td>Bias detection reflects training norms; may miss culturally specific stereotyping.</td><td>Probe international experience; concordance testing with diverse reviewers.</td></tr>
+        <tr><td class="r">Over-reliance</td><td>Studios treat approval as a legal shield, creating liability.</td><td>KidSafe certification is advisory, not determinative; legal review before broadcast.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===================== REFLECTION ===================== -->
+<section class="block reveal" id="reflection">
+  <div class="wrap">
+    <div class="sec-mark mono">09 — Reflection</div>
+    <h2>What I'd carry forward</h2>
+    <div class="cols2">
+      <div>
+        <p>The most useful lesson was that a <b>technical failure became the product insight</b>. Constraining the prompt to stop hallucinating citations forced a more nuanced architecture — and that nuance, the ability to see corrected bias, is exactly what made the tool resonate. I'd now treat failure logs as a research input, not just debugging.</p>
+        <p>The biggest friction was <b>trust calibration</b>: every professional wanted the AI's help but none would cede the final call. Rather than fight that, I designed for it — the product's value is protecting human judgment, not replacing it.</p>
+      </div>
+      <div>
+        <p><b>Scaling beyond the prototype</b>, the hard part isn't the model — it's the guidelines. As one participant put it, building the tool is easy; getting the right criteria into it is the real work, and people genuinely disagree about what counts as stereotyping or harm. A production version lives or dies on configurable, human-owned guidelines and on holding that sub-1% false-negative line.</p>
+        <p class="muted">As an AI orchestrator, my stewardship principle is simple: automate the mechanical, protect the consequential, and never let a clean interface imply a certainty the system doesn't have.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div><b>KidSafe</b> — AI content safety review · Case study by Angela Xu</div>
+    <div>INTC 6033 · 2026 · Researcher &amp; AI orchestrator</div>
+  </div>
+</footer>
+
+<script>
+  // gentle scroll reveal
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); obs.unobserve(e.target);} });
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+
+</body>
+</html>
