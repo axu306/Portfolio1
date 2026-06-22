@@ -166,6 +166,8 @@
   .card .num{font-family:"SF Mono",monospace;font-size:.8rem;color:var(--flag);font-weight:600;}
   .card h3{margin:8px 0 8px;font-size:1.02rem;}
   .card p{font-size:.93rem;color:var(--ink-soft);margin-bottom:0;}
+  .card .tradeoff{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size:.86rem;color:var(--ink-soft);}
+  .card .tradeoff b{font-family:"SF Mono",monospace;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--flag);font-weight:600;display:block;margin-bottom:3px;}
 
   /* iteration timeline */
   .timeline{border-left:2px solid var(--line);margin:10px 0 0;padding:4px 0 4px 0;}
@@ -186,6 +188,9 @@
   .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;text-align:left;}
   .kpi .big{font-family:"Inter",system-ui,sans-serif;font-size:1.7rem;font-weight:700;color:var(--signal-deep);letter-spacing:-.02em;}
   .kpi .lab{font-family:"Inter",system-ui,sans-serif;font-size:.8rem;color:var(--ink-soft);margin-top:4px;line-height:1.35;}
+  .kpi.star{border-color:var(--signal);border-width:2px;background:linear-gradient(180deg,rgba(31,122,90,.05),var(--panel));}
+  .kpi .startag{font-family:"SF Mono",monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--signal-deep);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .kpi .startag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--signal);}
 
   /* image placeholder */
   figure{margin:22px 0;}
@@ -222,6 +227,13 @@
 
   /* footer */
   footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--ink-soft);font-family:"Inter",system-ui,sans-serif;font-size:.86rem;}
+  .byline{display:flex;align-items:center;gap:16px;}
+  .byline img{width:60px;height:60px;border-radius:50%;object-fit:cover;border:1px solid var(--line);box-shadow:var(--shadow);flex:0 0 auto;}
+  .byline .who{line-height:1.4;}
+  .byline .who .name{font-weight:700;color:var(--ink);font-size:1rem;}
+  .byline .who .role{color:var(--ink-soft);}
+  footer .meta{text-align:right;}
+  @media(max-width:560px){footer .meta{text-align:left;}}
   footer .wrap{display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:center;}
 
   .reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease;}
@@ -257,7 +269,6 @@
 
     <div class="scorecard" aria-label="Executive summary, styled as a KidSafe review result">
       <div class="scorecard-head">
-        <div class="score-ring" style="--val:92"><b>92</b></div>
         <div class="score-meta">
           <div class="status">Executive summary</div>
           <div class="sub">Context · Problem · Solution · Impact — the 30-second read</div>
@@ -288,7 +299,7 @@
     <div class="facts sans">
       <div class="fact"><div class="k">Goal</div><div class="v">Cut first-pass review time, keep humans deciding</div></div>
       <div class="fact"><div class="k">Role</div><div class="v">Solo — researcher &amp; AI orchestrator</div></div>
-      <div class="fact"><div class="k">Timeframe</div><div class="v">Graduate course, ~6 weeks (2026)</div></div>
+      <div class="fact"><div class="k">Timeframe</div><div class="v">Graduate course, ~8 weeks (2026)</div></div>
       <div class="fact"><div class="k">Tools</div><div class="v">Replit · Claude/LLM prompting · Zoom · Otter.ai</div></div>
     </div>
   </div>
@@ -393,18 +404,21 @@
     <div class="cards">
       <div class="card">
         <div class="num">Decision 01</div>
-        <h3>Platform: a live prototype, not a deck</h3>
-        <p>I chose Replit to ship a working, clickable tool because the research goal was <em>validation</em> — watching real professionals navigate and triage — which a static mockup can't surface. The brief rewarded a standalone artifact that stands on its own.</p>
+        <h3>Platform: a working tool, on a new-to-me builder</h3>
+        <p>I shipped a live, clickable tool rather than a mockup because the research goal was <em>validation</em> — watching real professionals navigate and triage, which a static prototype can't surface. The brief rewarded a standalone artifact that stands on its own.</p>
+        <p class="tradeoff"><b>Traded off</b>I'd already built in Lovable, so I deliberately chose Replit to widen my tool fluency rather than repeat a platform I knew. The cost was a steeper learning curve mid-project; the payoff was hands-on judgment about which builder fits which job — exactly the kind of platform discernment an orchestrator role demands.</p>
       </div>
       <div class="card">
         <div class="num">Decision 02</div>
         <h3>Drawing the human-in-the-loop line</h3>
         <p>Using an automation-vs-augmentation framework, I partitioned the work: rule-matching and scoring are fully automated; every triage decision and all guideline configuration stay human-owned. The AI enforces what humans set — it doesn't define what "safe" means.</p>
+        <p class="tradeoff"><b>Traded off</b>Full auto-approval above a score threshold would cut review time far more — the headline efficiency win. I rejected it: fieldwork was unanimous that a missed flag is disqualifying, so I traded maximum speed for a zero-auto-approval guarantee.</p>
       </div>
       <div class="card">
         <div class="num">Decision 03</div>
         <h3>Constraining the prompt against hallucination</h3>
         <p>When the scoring prompt began citing script lines that didn't exist, I added a hard rule: reference only text present verbatim in the submission. Fabricated evidence destroys reviewer trust — so the architecture forbids it.</p>
+        <p class="tradeoff"><b>Traded off</b>A looser prompt that paraphrased or inferred context produced richer-sounding explanations, but occasionally invented evidence. I chose narrower, verifiable output over fluency — a flag a reviewer can check beats one that reads well.</p>
       </div>
     </div>
 
@@ -513,10 +527,10 @@
   <div class="wrap">
     <div class="sec-mark mono">08 — Evaluation &amp; aspirational impact</div>
     <h2>Risks identified, and KPIs to scale</h2>
-    <p>The evaluation plan separates what I could test in a small study from the metrics that would govern a real production rollout. The targets below are the ones I'd hold the product to as it scales.</p>
+    <p>The evaluation plan separates what I could test in a small study from the metrics that would govern a real production rollout. These aren't weighted equally: fieldwork was unanimous that a <em>missed</em> violation is the one failure that ends trust, so false-negative rate is the north-star metric every other target is subordinate to. A faster review that lets something through is a worse product, not a better one.</p>
 
     <div class="kpis">
-      <div class="kpi"><div class="big">&lt;1%</div><div class="lab">False-negative rate — missing a real problem is the primary trust-breaking failure</div></div>
+      <div class="kpi star"><div class="startag">North-star metric</div><div class="big">&lt;1%</div><div class="lab">False-negative rate — missing a real problem is the primary trust-breaking failure</div></div>
       <div class="kpi"><div class="big">&lt;10%</div><div class="lab">False-positive rate — excess flags create fatigue and erode adoption</div></div>
       <div class="kpi"><div class="big">&lt;5 min</div><div class="lab">First-pass review time per submission</div></div>
       <div class="kpi"><div class="big">67%+</div><div class="lab">Adoption intent — would advocate for KidSafe to their supervisor</div></div>
@@ -542,12 +556,12 @@
     <h2>What I'd carry forward</h2>
     <div class="cols2">
       <div>
-        <p>The most useful lesson was that a <b>technical failure became the product insight</b>. Constraining the prompt to stop hallucinating citations forced a more nuanced architecture — and that nuance, the ability to see corrected bias, is exactly what made the tool resonate. I'd now treat failure logs as a research input, not just debugging.</p>
-        <p>The biggest friction was <b>trust calibration</b>: every professional wanted the AI's help but none would cede the final call. Rather than fight that, I designed for it — the product's value is protecting human judgment, not replacing it.</p>
+        <p><b>The most useful lesson: a technical failure became the product.</b> Forcing the prompt to stop fabricating citations made it learn to tell harmful bias from bias a story models and then corrects — and that distinction, not the score, is what made professionals lean in. The bug log was the research. I now read failure modes as product signal, not just defects to patch.</p>
+        <p><b>The hardest problem was trust, and it doesn't yield to better accuracy.</b> Every professional wanted the AI's help; none would cede the final call. That isn't a gap to close with a higher score — it's the correct instinct, and the product's job is to honor it. I stopped designing toward autonomy and started designing toward earned confidence.</p>
       </div>
       <div>
-        <p><b>Scaling beyond the prototype</b>, the hard part isn't the model — it's the guidelines. As one participant put it, building the tool is easy; getting the right criteria into it is the real work, and people genuinely disagree about what counts as stereotyping or harm. A production version lives or dies on configurable, human-owned guidelines and on holding that sub-1% false-negative line.</p>
-        <p class="muted">As an AI orchestrator, my stewardship principle is simple: automate the mechanical, protect the consequential, and never let a clean interface imply a certainty the system doesn't have.</p>
+        <p><b>At scale, the model is the easy part — the guidelines are the work.</b> An AI can apply a rule consistently; it can't tell a studio what "safe" should mean, and reasonable people disagree about where stereotyping or harm begins. A production version lives or dies on configurable, human-owned standards and on never breaching the false-negative floor — the moment it does, every efficiency gain is worthless.</p>
+        <p class="muted">That's the stewardship principle I'd carry into any AI product: <b>automate the mechanical, protect the consequential, and never let a confident interface imply a certainty the system hasn't earned.</b> The hardest engineering in safety-critical AI isn't making the model capable — it's keeping a person meaningfully in the decision when the interface makes deferring to the machine so easy.</p>
       </div>
     </div>
   </div>
@@ -555,8 +569,17 @@
 
 <footer>
   <div class="wrap">
-    <div><b>KidSafe</b> — AI content safety review · Case study by Angela Xu</div>
-    <div>INTC 6033 · 2026 · Researcher &amp; AI orchestrator</div>
+    <div class="byline">
+      <img src="headshot.jpg" alt="Angela Xu">
+      <div class="who">
+        <div class="name">Angela Xu</div>
+        <div class="role">Lead Researcher &amp; AI Orchestrator · KidSafe</div>
+      </div>
+    </div>
+    <div class="meta">
+      <div><b>KidSafe</b> — AI content safety review</div>
+      <div>INTC 6033 · 2026</div>
+    </div>
   </div>
 </footer>
 
